@@ -1,26 +1,66 @@
-<!-- resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Laravel') }}</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Fonts -->
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ config('app.name', 'Laravel Task Manager') }}</title>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            padding: 0;
+        }
+        nav {
+            background: #4f46e5;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        nav a, nav form button {
+            color: #fff;
+            background: none;
+            border: none;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ddd;
+        }
+    </style>
+
+    @livewireStyles
 </head>
 <body>
-    <div id="app">
-        <main class="py-4">
-            {{ $slot }}
-        </main>
+
+    <nav>
+        @guest
+            <a href="{{ route('login') }}">Login</a>
+            <a href="{{ route('register') }}">Register</a>
+        @else
+            <a href="{{ route('tasks') }}">Tasks</a>
+            <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                @csrf
+                <button type="submit">Logout</button>
+            </form>
+        @endguest
+    </nav>
+
+    <div class="container">
+        {{ $slot }}
     </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    @livewireScripts
 </body>
 </html>

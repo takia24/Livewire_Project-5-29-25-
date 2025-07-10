@@ -7,6 +7,8 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.js',           // এই লাইনটা যোগ করো
+        './app/Http/Livewire/**/*.php',    // যদি Livewire কম্পোনেন্ট থাকে
     ],
 
     theme: {

@@ -1,22 +1,32 @@
 <?php
+
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
+use App\Livewire\Action\TaskManager;
+use App\Livewire\Counter;
 
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'authenticate']);
+Route::get('/counter', Counter::class);
 
-    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store']);
-});
 
+
+Route::get('/', function () {
+    return auth()->check() ? redirect()->route('tasks') : redirect()->route('login');
+})->name('home');
+
+
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'authenticate']);
+
+
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store']);
+
+// Authenticated routes
 Route::middleware('auth')->group(function () {
-    Route::get('/tasks', \App\Livewire\Action\TaskManager::class)->name('tasks');
+    // Task manager Livewire component
+    Route::get('/tasks', TaskManager::class)->name('tasks');
 
+    // Logout route
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
-
-// Redirect home to login
-Route::redirect('/', '/login');

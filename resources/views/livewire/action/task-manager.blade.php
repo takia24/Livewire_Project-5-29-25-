@@ -1,72 +1,297 @@
-<div class="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-    <!-- Back Button -->
-    <div class="mb-6">
-        <a href="{{ url()->previous() }}" class="inline-block px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-md text-sm font-medium text-gray-700">
-            Back
-        </a>
-    </div>
-
-    <!-- Header -->
-    <div class="text-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Task Manager</h1>
-        <p class="text-gray-500 text-sm mt-1">Manage your tasks efficiently</p>
-    </div>
+<div class="task-manager">
 
     <!-- Add Task Form -->
-    <div class="bg-white rounded-md shadow p-4 mb-6">
-        <form wire:submit.prevent="addTask" class="flex gap-2">
-            <input 
-                type="text"
-                wire:model="title"
-                placeholder="Add a new task..."
-                class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-            <button 
-                type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm transition"
-            >
-                Add
-            </button>
-        </form>
-        @error('title')
-            <p class="text-red-500 text-xs mt-2 pl-1">{{ $message }}</p>
-        @enderror
-    </div>
+    <form wire:submit.prevent="addTask" class="add-task-form">
+        <input
+            type="text"
+            wire:model.defer="title"
+            placeholder="Add a new task..."
+            autocomplete="off"
+            class="task-input"
+        />
+        <button type="submit" class="add-button">Add Task</button>
+    </form>
+    @error('title') <p class="error-message">{{ $message }}</p> @enderror
 
     <!-- Task List -->
-    <div class="space-y-3">
-        @forelse($tasks as $task)
-            <div class="flex items-center justify-between p-3 rounded-md bg-white shadow border border-gray-200">
-                
-                <div class="flex items-center space-x-3">
-                    <input 
-                        type="checkbox"
-                        wire:change="toggleComplete({{ $task->id }})"
-                        {{ $task->completed ? 'checked' : '' }}
-                        class="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
-                    >
-                    <span class="{{ $task->completed ? 'line-through text-gray-500 text-sm' : 'text-gray-800 text-sm' }}">
-                        {{ $task->title }}
-                    </span>
-                </div>
-                
-                <button 
-                    wire:click="deleteTask({{ $task->id }})"
-                    class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition"
-                    title="Delete Task"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-        @empty
-            <div class="bg-white rounded-md shadow p-6 text-center text-gray-500 border border-gray-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6h6v6m2 4H7a2 2 0 01-2-2V7a2 2 0 012-2h3l2-2h4l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2z" />
-                </svg>
-                <p class="mt-3 text-sm">No tasks found. Add your first task above!</p>
-            </div>
-        @endforelse
+    @if($tasks->isEmpty())
+        <p class="empty-state">No tasks found. Add your first task above!</p>
+    @else
+        <ul class="task-list">
+            @foreach($tasks as $task)
+                <li class="task-item {{ $task->completed ? 'completed' : '' }}">
+                    <div class="task-content">
+                        <label class="checkbox-container">
+                            <input
+                                type="checkbox"
+                                wire:change="toggleComplete({{ $task->id }})"
+                                {{ $task->completed ? 'checked' : '' }}
+                            />
+                            <span class="checkmark"></span>
+                        </label>
+
+                        @if($editTaskId === $task->id)
+                            <input
+                                type="text"
+                                class="edit-input"
+                                wire:model.defer="editTitle"
+                                autocomplete="off"
+                            />
+                        @else
+                            <span class="task-title">{{ $task->title }}</span>
+                        @endif
+                    </div>
+
+                    <div class="task-actions">
+                        @if($editTaskId === $task->id)
+                            <button class="action-button save-button" wire:click="updateTask">
+                                ✅ Save
+                            </button>
+                            <button class="action-button cancel-button" wire:click="cancelEdit">
+                                ✖ Cancel
+                            </button>
+                        @else
+                            <button class="action-button edit-button" wire:click="editTask({{ $task->id }})">
+                                ✏️ Edit
+                            </button>
+                            <button 
+                                wire:click="deleteTask({{ $task->id }})"
+                                onclick="return confirm('Are you sure you want to delete this task?')"
+                                class="action-button delete-button"
+                                title="Delete Task"
+                            >
+                                🗑️ Delete
+                            </button>
+                        @endif
+                    </div>
+                </li>
+            @endforeach
+        </ul>
+    @endif
+
+    <!-- ✅ Counter Component যুক্ত -->
+    <div style="margin-top: 2rem;">
+        @livewire('counter')
     </div>
+
+    <style>
+        /* ------ তোমার আগের Style 그대로 ------ */
+        .task-manager {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-task-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        .add-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .add-button:hover {
+            background-color: #4338ca;
+        }
+
+        .error-message {
+            color: #ef4444;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #64748b;
+            padding: 2rem 0;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .task-item.completed {
+            opacity: 0.7;
+        }
+
+        .task-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .checkbox-container {
+            display: block;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            position: relative;
+            height: 20px;
+            width: 20px;
+            background-color: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: #94a3b8;
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .task-title {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+
+        .edit-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .edit-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .edit-button {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .edit-button:hover {
+            background-color: #c7d2fe;
+        }
+
+        .delete-button {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+
+        .delete-button:hover {
+            background-color: #fecaca;
+        }
+
+        .save-button {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .save-button:hover {
+            background-color: #bbf7d0;
+        }
+
+        .cancel-button {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+
+        .cancel-button:hover {
+            background-color: #e2e8f0;
+        }
+    </style>
 </div>
